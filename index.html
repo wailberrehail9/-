@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>تعلم معي</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📅 عاداتي</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Tahoma, Arial, sans-serif;
+        background: #f5f8fa;
+        color: #333;
+    }
+    header {
+        background: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    header .logo { font-size: 1.5em; }
+    header nav a {
+        color: white;
+        margin-left: 15px;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    header nav a:hover { text-decoration: underline; }
+
+    main { padding: 20px; max-width: 900px; margin: auto; }
+
+    .challenge-card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .challenge-info { flex: 1; }
+    .challenge-info h3 { margin: 0 0 5px; color: #4CAF50; }
+    .challenge-info p { margin: 0 0 10px; font-size: 0.9em; color: #555; }
+    .challenge-info span { font-size: 0.85em; color: #777; }
+    .join-btn {
+        background: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        height: fit-content;
+    }
+    .join-btn:hover { background: #1976D2; }
+
+    #progress-section { display: none; margin-top: 20px; }
+    .day { width: 30px; height: 30px; background: #eee; display: inline-block; margin: 3px; border-radius: 5px; cursor: pointer; text-align: center; line-height: 30px; }
+    .day.done { background: #4CAF50; color: white; }
+
+    footer {
+        background: #333;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        margin-top: 30px;
+    }
+
+    /* Responsive */
+    @media(max-width:600px){
+        header { flex-direction: column; align-items: flex-start; }
+        header nav a { margin: 5px 10px 0 0; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo">📅 عاداتي</div>
+    <nav>
+        <a href="#">الرئيسية</a>
+        <a href="#">تحدياتي</a>
+        <a href="#">إحصائيات</a>
+        <a href="#" id="login-btn">تسجيل دخول</a>
+    </nav>
+</header>
+
+<main>
+    <section id="challenge-list">
+        <!-- التحديات ستظهر هنا -->
+    </section>
+
+    <section id="progress-section">
+        <h2>متابعة التقدم</h2>
+        <div id="days-container"></div>
+        <p>نسبة الإنجاز: <span id="progress-percent">0%</span></p>
+        <button onclick="closeProgress()" style="margin-top:10px;">الرجوع للقائمة</button>
+    </section>
+</main>
+
+<footer>
+    حقوق الموقع © 2025 | <a href="#" style="color:#4CAF50;">سياسة الخصوصية</a>
+</footer>
+
+<script>
+    // بيانات التحديات كمثال
+    let challenges=[
+
+    {name:"قراءة 10 صفحات يوميًا",desc:"طور عادة القراءة يوميًا لمدة 30 يومًا",days:30},
+
+    {name:"شرب 2 لتر ماء",desc:"تناول كمية كافية من الماء يوميًا",days:30},
+
+    {name:"ممارسة الرياضة",desc:"ممارسة نشاط رياضي يوميًا",days:21},
+
+    {name:"صناعة مشروع", desc:"خطوات يومية لبناء مشروعك الخاص", days:60},
+
+    {name:"الالتزام بالصلاة", desc:"أدّ جميع الصلوات الخمس في وقتها يوميًا", days:30},
+
+    {name:"جمع نقود", desc:"ادخر مبلغ بسيط كل يوم لتحقيق هدف مالي", days:90}
+
+];
+
+    const challengeList = document.getElementById('challenge-list');
+    const progressSection = document.getElementById('progress-section');
+    const daysContainer = document.getElementById('days-container');
+    const progressPercent = document.getElementById('progress-percent');
+
+    let currentChallenge = null;
+    let progressData = {}; // لحفظ الأيام المنجزة
+
+    function renderChallenges() {
+        challengeList.innerHTML = '';
+        challenges.forEach((ch, index) => {
+            const card = document.createElement('div');
+            card.className = 'challenge-card';
+
+            const info = document.createElement('div');
+            info.className = 'challenge-info';
+            info.innerHTML = `<h3>${ch.name}</h3><p>${ch.desc}</p><span>مدة التحدي: ${ch.days} أيام</span>`;
+
+            const btn = document.createElement('button');
+            btn.className = 'join-btn';
+            btn.textContent = 'انضم للتحدي';
+            btn.onclick = () => joinChallenge(index);
+
+            card.appendChild(info);
+            card.appendChild(btn);
+            challengeList.appendChild(card);
+        });
+    }
+
+    function joinChallenge(index) {
+        currentChallenge = challenges[index];
+        if(!progressData[currentChallenge.name]){
+            progressData[currentChallenge.name] = Array(currentChallenge.days).fill(false);
+        }
+        showProgress();
+    }
+
+    function showProgress() {
+        challengeList.style.display = 'none';
+        progressSection.style.display = 'block';
+        daysContainer.innerHTML = '';
+        const days = progressData[currentChallenge.name];
+        days.forEach((done, i) => {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day' + (done ? ' done' : '');
+            dayDiv.textContent = i+1;
+            dayDiv.onclick = () => toggleDay(i);
+            daysContainer.appendChild(dayDiv);
+        });
+        updateProgress();
+    }
+
+    function toggleDay(i){
+        const days = progressData[currentChallenge.name];
+        days[i] = !days[i];
+        showProgress();
+    }
+
+    function updateProgress(){
+        const days = progressData[currentChallenge.name];
+        const doneCount = days.filter(d => d).length;
+        const percent = Math.round((doneCount/days.length)*100);
+        progressPercent.textContent = percent + '%';
+    }
+
+    function closeProgress(){
+        progressSection.style.display = 'none';
+        challengeList.style.display = 'block';
+    }
+
+    renderChallenges();
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+
+<html lang="ar">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>📅 عاداتي</title>
+
+<style>
+
+    body {
+
+        margin: 0;
+
+        font-family: Tahoma, Arial, sans-serif;
+
+        background: #f5f8fa;
+
+        color: #333;
+
+    }
+
+    header {
+
+        background: #4CAF50;
+
+        color: white;
+
+        padding: 15px 20px;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        flex-wrap: wrap;
+
+    }
+
+    header .logo { font-size: 1.5em; }
+
+    header nav a {
+
+        color: white;
+
+        margin-left: 15px;
+
+        text-decoration: none;
+
+        font-weight: bold;
+
+        cursor: pointer;
+
+    }
+
+    header nav a:hover { text-decoration: underline; }
+
+    main { padding: 20px; max-width: 900px; margin: auto; }
+
+    .challenge-card {
+
+        background: white;
+
+        padding: 15px;
+
+        border-radius: 10px;
+
+        margin-bottom: 15px;
+
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        display: flex;
+
+        justify-content: space-between;
+
+        flex-wrap: wrap;
+
+    }
+
+    .challenge-info { flex: 1; }
+
+    .challenge-info h3 { margin: 0 0 5px; color: #4CAF50; }
+
+    .challenge-info p { margin: 0 0 10px; font-size: 0.9em; color: #555; }
+
+    .challenge-info span { font-size: 0.85em; color: #777; }
+
+    .join-btn {
+
+        background: #2196F3;
+
+        color: white;
+
+        border: none;
+
+        border-radius: 5px;
+
+        padding: 10px 15px;
+
+        cursor: pointer;
+
+        height: fit-content;
+
+    }
+
+    .join-btn:hover { background: #1976D2; }
+
+    #days-container { margin-top: 10px; }
+
+    .day { width: 30px; height: 30px; background: #eee; display: inline-block; margin: 3px; border-radius: 5px; cursor: pointer; text-align: center; line-height: 30px; }
+
+    .day.done { background: #4CAF50; color: white; }
+
+    #add-challenge { margin-bottom: 20px; }
+
+    #add-challenge input, #add-challenge button { margin: 5px 0; }
+
+    footer {
+
+        background: #333;
+
+        color: white;
+
+        text-align: center;
+
+        padding: 15px;
+
+        margin-top: 30px;
+
+    }
+
+    /* Responsive */
+
+    @media(max-width:600px){
+
+        header { flex-direction: column; align-items: flex-start; }
+
+        header nav a { margin: 5px 10px 0 0; }
+
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+
+   <main>
+
+    <!-- الرئيسية -->
+
+    <section id="dashboard" class="section">
+
+        <h2>التحديات المتاحة</h2>
+
+        <div id="challenge-list"></div>
+
+    </section>
+
+    <!-- تحدياتي -->
+
+    <section id="myChallenges" class="section">
+
+        <h2>تحدياتي</h2>
+
+        <div id="my-challenge-list"></div>
+
+    </section>
+
+    <!-- إحصائيات -->
+
+    <section id="stats" class="section">
+
+        <h2>إحصائيات التقدم</h2>
+
+        <div id="stats-list"></div>
+
+    </section>
+
+    <!-- إضافة عادات جديدة -->
+
+    <section id="addNew" class="section">
+
+        <h2>إضافة عادة جديدة</h2>
+
+        <div id="add-challenge">
+
+            <input type="text" id="newName" placeholder="اسم التحدي">
+
+            <input type="text" id="newDesc" placeholder="وصف التحدي">
+
+            <input type="number" id="newDays" placeholder="مدة التحدي بالأيام">
+
+            <button onclick="addNewChallenge()">أضف التحدي</button>
+
+        </div>
+
+    </section>
+
+</main>
+
+<style>
+
+.section { display: none; }
+
+</style>
+
+<script>
+
+function showSection(sectionId){
+
+    document.querySelectorAll('.section').forEach(s => s.style.display='none');
+
+    document.getElementById(sectionId).style.display='block';
+
+    if(sectionId==='dashboard') renderChallenges();
+
+    if(sectionId==='myChallenges') renderMyChallenges();
+
+    if(sectionId==='stats') renderStats();
+
+}
+
+// بدء الصفحة على الرئيسية
+
+showSection('dashboard');
+
+</script>
+
+   <script>
+// تحميل البيانات من LocalStorage عند بدء الموقع
+if(localStorage.getItem('myChallenges')){
+    myChallenges = JSON.parse(localStorage.getItem('myChallenges'));
+}
+
+function renderDashboard(){
+    const main=document.getElementById('main-content');
+    main.innerHTML='<h2>التحديات المتاحة</h2><div id="challenge-list"></div>';
+    const list=document.getElementById('challenge-list');
+    challenges.forEach((ch)=>{
+        const card=document.createElement('div'); card.className='challenge-card';
+        const info=document.createElement('div'); info.className='challenge-info';
+        info.innerHTML=`<h3>${ch.name}</h3><p>${ch.desc}</p><span>مدة التحدي: ${ch.days} أيام</span>`;
+        const btn=document.createElement('button'); btn.className='join-btn'; btn.textContent='انضم للتحدي';
+        btn.onclick=()=>{
+            if(!myChallenges[ch.name]) myChallenges[ch.name]=Array(ch.days).fill(false); 
+            saveChallenges(); // حفظ بعد الانضمام
+            renderMyChallenges(); 
+        };
+        card.appendChild(info); card.appendChild(btn); list.appendChild(card);
+    });
+}
+
+function renderMyChallenges(){
+    const main=document.getElementById('main-content');
+    main.innerHTML='<h2>تحدياتي</h2><div id="my-challenge-list"></div>';
+    const container=document.getElementById('my-challenge-list');
+    for(let name in myChallenges){
+        const card=document.createElement('div'); card.className='challenge-card';
+        const info=document.createElement('div'); info.className='challenge-info';
+        info.innerHTML=`<h3>${name}</h3>`;
+        const daysDiv=document.createElement('div');
+        myChallenges[name].forEach((done,i)=>{
+            const dayDiv=document.createElement('div'); 
+            dayDiv.className='day'+(done?' done':''); 
+            dayDiv.textContent=i+1;
+            dayDiv.onclick=()=>{
+                myChallenges[name][i]=!myChallenges[name][i]; 
+                saveChallenges(); // حفظ بعد تعديل يوم
+                renderMyChallenges(); 
+            };
+            daysDiv.appendChild(dayDiv);
+        });
+        card.appendChild(info); card.appendChild(daysDiv); container.appendChild(card);
+    }
+}
+
+function renderStats(){
+    const main=document.getElementById('main-content');
+    main.innerHTML='<h2>إحصائيات التقدم</h2><div id="stats-list"></div>';
+    const container=document.getElementById('stats-list');
+    for(let name in myChallenges){
+        const total=myChallenges[name].length;
+        const done=myChallenges[name].filter(d=>d).length;
+        const percent=Math.round((done/total)*100);
+        const div=document.createElement('div');
+        div.style.background='#e0ffe0'; 
+        div.style.padding='10px'; 
+        div.style.marginBottom='10px'; 
+        div.style.borderRadius='5px';
+        div.innerHTML=`<strong>${name}</strong>: ${done}/${total} أيام (${percent}%)`;
+        container.appendChild(div);
+    }
+}
+
+function renderAddNew(){
+    const main=document.getElementById('main-content');
+    main.innerHTML=`<h2>إضافة عادة جديدة</h2>
+        <div id="add-challenge">
+            <input type="text" id="newName" placeholder="اسم التحدي">
+            <input type="text" id="newDesc" placeholder="وصف التحدي">
+            <input type="number" id="newDays" placeholder="مدة التحدي بالأيام">
+            <button onclick="addNewChallenge()">أضف التحدي</button>
+        </div>`;
+}
+
+function addNewChallenge(){
+    const name=document.getElementById('newName').value.trim();
+    const desc=document.getElementById('newDesc').value.trim();
+    const days=parseInt(document.getElementById('newDays').value);
+    if(!name||!desc||!days){alert('أكمل جميع الحقول');return;}
+    challenges.push({name,desc,days});
+    alert('تم إضافة التحدي بنجاح!');
+    renderDashboard();
+}
+
+// حفظ التحديات في LocalStorage
+function saveChallenges(){
+    localStorage.setItem('myChallenges', JSON.stringify(myChallenges));
+}
+
+// بدء الصفحة على الرئيسية
+renderDashboard();
+</script>
+<!-- partial -->
+  
+</body>
+</html>
